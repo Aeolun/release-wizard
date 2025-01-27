@@ -1,23 +1,23 @@
-import * as core from '@actions/core';
-import * as github from '@actions/github';
-import { join as pathJoin } from 'path';
+import { join as pathJoin } from "path";
+import * as core from "@actions/core";
+import * as github from "@actions/github";
 
-import { Release } from '../types';
+import type { Release } from "../types";
 
 export async function renderReleaseBody(
   token: string,
   templatePath: string,
   app: string,
   releaseVersion: string,
-  changes = '',
-  tasks = '',
-  pullRequests = '',
-  contributors = '',
+  changes = "",
+  tasks = "",
+  pullRequests = "",
+  contributors = "",
 ): Promise<string> {
   const { owner, repo } = github.context.repo;
   const { ref } = github.context;
   const octokit = github.getOctokit(token);
-  const path = pathJoin('.github', templatePath);
+  const path = pathJoin(".github", templatePath);
   core.debug(
     `Retrieving content from repo ${repo} (${ref}) in expected path ${path}`,
   );
@@ -28,9 +28,9 @@ export async function renderReleaseBody(
     ref,
   });
   let template: string;
-  if ('content' in contentResponse.data) {
-    template = Buffer.from(contentResponse.data.content, 'base64').toString(
-      'utf8',
+  if ("content" in contentResponse.data) {
+    template = Buffer.from(contentResponse.data.content, "base64").toString(
+      "utf8",
     );
   } else {
     throw new Error(`Unable to find template in ${templatePath}`);
@@ -43,7 +43,7 @@ export async function renderReleaseBody(
   body = body.replace(/\$TASKS/g, tasks);
   body = body.replace(/\$PULL_REQUESTS/g, pullRequests);
   body = body.replace(/\$CONTRIBUTORS/g, contributors);
-  core.setOutput('body', body);
+  core.setOutput("body", body);
   return body;
 }
 
@@ -91,7 +91,7 @@ export async function createGithubRelease(
             release_id: release.id,
           });
           core.debug(
-            `Deleted previous draft release "${release.name || 'undefined'}"`,
+            `Deleted previous draft release "${release.name || "undefined"}"`,
           );
         }
       }
@@ -117,7 +117,7 @@ export async function createGithubRelease(
     data: { id: releaseId, html_url: htmlUrl, upload_url: uploadUrl },
   } = createReleaseResponse;
 
-  core.setOutput('release_id', releaseId.toString());
-  core.setOutput('html_url', htmlUrl);
-  core.setOutput('upload_url', uploadUrl);
+  core.setOutput("release_id", releaseId.toString());
+  core.setOutput("html_url", htmlUrl);
+  core.setOutput("upload_url", uploadUrl);
 }

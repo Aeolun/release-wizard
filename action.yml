@@ -72,8 +72,12 @@ inputs:
   token:
     description: "The token to access Github's API"
     required: true
-  withV:
-    description: 'Prefix the calculated version with `v`'
+  versionPrefix:
+    description: 'Prefix the calculated release version (and the one used for version comparisons) with a static string'
+    required: false
+    default: 'true'
+  tagPrefix:
+    description: 'Prefix the generated tag (and the one used for version comparisons) with a static string'
     required: false
     default: 'true'
 outputs:
@@ -102,5 +106,5 @@ outputs:
   upload_url:
     description: 'The url used for uploading release artifacts'
 runs:
-  using: 'node16'
+  using: node20
   main: 'dist/index.js'

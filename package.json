@@ -8,17 +8,13 @@
     "type": "git",
     "url": "git+https://github.com/darioblanco/release-wizard.git"
   },
-  "keywords": [
-    "actions",
-    "node",
-    "setup",
-    "release"
-  ],
+  "keywords": ["actions", "node", "setup", "release"],
   "author": "Dario Blanco <dblancoit@gmail.com>",
   "license": "MIT",
   "dependencies": {
     "@actions/core": "^1.10.0",
     "@actions/github": "^5.1.1",
+    "@biomejs/biome": "^1.9.4",
     "@octokit/types": "^11.1.0",
     "semver": "^7.6.3"
   },
@@ -53,16 +49,15 @@
   "scripts": {
     "all": "npm run build && npm run format && npm run lint && npm run package && npm test",
     "build": "tsc -p tsconfig.build.json",
-    "lint": "eslint --ext .ts,.tsx,.js,.jsx",
     "lint:commit": "commitlint -x @commitlint/config-conventional --edit",
-    "format": "prettier --write --ignore-unknown .",
-    "format:check": "prettier --check --ignore-unknown .",
+    "check": "biome check .",
+    "check:fix": "biome check --unsafe --write .",
     "package": "ncc build --source-map --license licenses.txt",
     "prepare": "is-ci || husky install",
     "test": "jest --coverage"
   },
   "lint-staged": {
-    "*": "npm run format",
-    "*.{js,jsx,ts,tsx}": "eslint --fix"
+    "*": "npm run check",
+    "*.{js,jsx,ts,tsx}": "biome check --unsafe --write"
   }
 }

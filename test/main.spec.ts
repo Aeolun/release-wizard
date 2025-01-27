@@ -1,47 +1,47 @@
-import { getBooleanInput, getInput, setFailed } from '@actions/core';
+import { getBooleanInput, getInput, setFailed } from "@actions/core";
 
-import { commitParser } from '@/lib/commits';
+import { commitParser } from "@/lib/commits";
 import {
   createGitTag,
   createGithubRelease,
   renderReleaseBody,
-} from '@/lib/release';
-import { bumpVersion, retrieveLastReleasedVersion } from '@/lib/version';
-import { run } from '@/main';
-import { VersionType } from '@/types';
+} from "@/lib/release";
+import { bumpVersion, retrieveLastReleasedVersion } from "@/lib/version";
+import { run } from "@/main";
+import { VersionType } from "@/types";
 
-jest.mock('@actions/core');
-jest.mock('@actions/github', () => ({
+jest.mock("@actions/core");
+jest.mock("@actions/github", () => ({
   context: {
-    ref: 'refs/heads/main',
+    ref: "refs/heads/main",
     repo: {
-      owner: 'theowner',
-      repo: 'therepo',
+      owner: "theowner",
+      repo: "therepo",
     },
   },
   getOctokit: jest.fn(),
 }));
-jest.mock('@/lib/commits');
-jest.mock('@/lib/release');
-jest.mock('@/lib/version');
+jest.mock("@/lib/commits");
+jest.mock("@/lib/release");
+jest.mock("@/lib/version");
 
-describe('run', () => {
+describe("run", () => {
   // Required input values
-  const templatePath = 'RELEASE_DRAFT/default.md';
-  const token = 'faketoken';
+  const templatePath = "RELEASE_DRAFT/default.md";
+  const token = "faketoken";
   // Default input values
-  const taskPrefix = 'JIRA-';
+  const taskPrefix = "JIRA-";
   const draft = true;
   const prerelease = false;
-  const releaseTitleTemplate = '$TAG 🚀';
-  const withV = 'true';
+  const releaseTitleTemplate = "$TAG 🚀";
+  const withV = "true";
   // Template stubs
-  const changes = '';
+  const changes = "";
   const nextVersionType = VersionType.patch;
-  const tasks = '';
-  const pullRequests = '';
-  const contributors = '';
-  const body = 'releaseBody';
+  const tasks = "";
+  const pullRequests = "";
+  const contributors = "";
+  const body = "releaseBody";
 
   beforeEach(() => {
     (commitParser as jest.Mock).mockImplementation(() => ({
@@ -56,37 +56,37 @@ describe('run', () => {
       .mockResolvedValue(body);
   });
 
-  test('with required params', async () => {
+  test("with required params", async () => {
     (getInput as jest.Mock).mockImplementation((name: string) => {
       switch (name) {
-        case 'draft':
+        case "draft":
           return draft.toString();
-        case 'prerelease':
+        case "prerelease":
           return prerelease.toString();
-        case 'pushTag':
-          return 'false';
-        case 'releaseTitleTemplate':
+        case "pushTag":
+          return "false";
+        case "releaseTitleTemplate":
           return releaseTitleTemplate;
-        case 'taskPrefix':
+        case "taskPrefix":
           return taskPrefix;
-        case 'templatePath':
+        case "templatePath":
           return templatePath;
-        case 'token':
+        case "token":
           return token;
-        case 'withV':
+        case "withV":
           return withV;
         default:
           return undefined;
       }
     });
-    const tagPrefix = '';
+    const tagPrefix = "";
 
-    const baseTag = 'main';
+    const baseTag = "main";
     (retrieveLastReleasedVersion as jest.Mock)
       .mockImplementation()
       .mockResolvedValue(undefined);
 
-    const releaseVersion = '1.0.5';
+    const releaseVersion = "1.0.5";
     const releaseTag = `${tagPrefix}${releaseVersion}`;
     (bumpVersion as jest.Mock).mockImplementation(() => releaseTag);
 
@@ -128,43 +128,43 @@ describe('run', () => {
     expect(setFailed).not.toHaveBeenCalled();
   });
 
-  test('with specific production release and new release tag', async () => {
-    const app = 'fake-app';
-    const appTagSeparator = '@';
-    const baseTag = 'v1.0.4';
+  test("with specific production release and new release tag", async () => {
+    const app = "fake-app";
+    const appTagSeparator = "@";
+    const baseTag = "v1.0.4";
     const givenDraft = false;
     const givenPrerelease = true;
-    const releaseName = 'fake-app';
-    const releaseTag = `mycustomprefix-1.0.6`;
-    const taskBaseUrl = 'https://myfaketask.url';
+    const releaseName = "fake-app";
+    const releaseTag = "mycustomprefix-1.0.6";
+    const taskBaseUrl = "https://myfaketask.url";
     const withV = true;
     (getInput as jest.Mock).mockImplementation((name: string) => {
       switch (name) {
-        case 'app':
+        case "app":
           return app;
-        case 'appTagSeparator':
+        case "appTagSeparator":
           return appTagSeparator;
-        case 'baseTag':
+        case "baseTag":
           return baseTag;
-        case 'draft':
+        case "draft":
           return givenDraft.toString();
-        case 'monorepo':
-          return 'true';
-        case 'prerelease':
+        case "monorepo":
+          return "true";
+        case "prerelease":
           return givenPrerelease.toString();
-        case 'pushTag':
-          return 'true';
-        case 'releaseName':
+        case "pushTag":
+          return "true";
+        case "releaseName":
           return releaseName;
-        case 'releaseTag':
+        case "releaseTag":
           return releaseTag;
-        case 'taskBaseUrl':
+        case "taskBaseUrl":
           return taskBaseUrl;
-        case 'taskPrefix':
+        case "taskPrefix":
           return taskPrefix;
-        case 'templatePath':
+        case "templatePath":
           return templatePath;
-        case 'token':
+        case "token":
           return token;
         default:
           return undefined;
@@ -172,7 +172,7 @@ describe('run', () => {
     });
     (getBooleanInput as jest.Mock).mockImplementation((name: string) => {
       switch (name) {
-        case 'withV':
+        case "withV":
           return withV;
         default:
           return undefined;
@@ -213,8 +213,8 @@ describe('run', () => {
     expect(setFailed).not.toHaveBeenCalled();
   });
 
-  test('unexpected error', async () => {
-    const errorMsg = 'fake';
+  test("unexpected error", async () => {
+    const errorMsg = "fake";
     (getInput as jest.Mock).mockImplementation(() => {
       throw new Error(errorMsg);
     });

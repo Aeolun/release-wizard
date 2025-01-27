@@ -1,30 +1,30 @@
-import { setOutput } from '@actions/core';
-import { getOctokit } from '@actions/github';
+import { setOutput } from "@actions/core";
+import { getOctokit } from "@actions/github";
 
-import { commitParser } from '@/lib/commits';
-import { VersionType } from '@/types';
+import { commitParser } from "@/lib/commits";
+import { VersionType } from "@/types";
 
-jest.mock('@actions/github', () => ({
+jest.mock("@actions/github", () => ({
   context: {
     repo: {
-      owner: 'theowner',
-      repo: 'therepo',
+      owner: "theowner",
+      repo: "therepo",
     },
   },
   getOctokit: jest.fn(),
 }));
-jest.mock('@actions/core');
+jest.mock("@actions/core");
 
 const author = {
-  login: 'darioblanco',
-  html_url: 'https://authorurl',
+  login: "darioblanco",
+  html_url: "https://authorurl",
 };
 
-const html_url = 'https://commiturl';
-const sha = '62ec8ea713fdf14e4abaef3d7d5138194dec49ce';
+const html_url = "https://commiturl";
+const sha = "62ec8ea713fdf14e4abaef3d7d5138194dec49ce";
 
-describe('commit', () => {
-  const token = 'secret';
+describe("commit", () => {
+  const token = "secret";
   const compareCommitsResponse = {
     data: {
       commits: [
@@ -32,68 +32,68 @@ describe('commit', () => {
           author,
           html_url,
           sha,
-          commit: { message: 'feat:super feature' },
+          commit: { message: "feat:super feature" },
         },
         {
           author,
           html_url,
           sha,
-          commit: { message: 'fix: My fix' },
+          commit: { message: "fix: My fix" },
         },
         {
           author,
           html_url,
           sha,
-          commit: { message: 'perf: set additional performance steps' },
+          commit: { message: "perf: set additional performance steps" },
         },
         {
           author,
           html_url,
           sha,
-          commit: { message: 'docs(my-app): document everything' },
+          commit: { message: "docs(my-app): document everything" },
         },
         {
           author,
           html_url,
           sha,
-          commit: { message: 'style: awesome style' },
+          commit: { message: "style: awesome style" },
         },
         {
           author,
           html_url,
           sha,
-          commit: { message: 'refactor(my-app): one does not simply refactor' },
+          commit: { message: "refactor(my-app): one does not simply refactor" },
         },
         {
           author,
           html_url,
           sha,
-          commit: { message: 'test: Tests are good' },
+          commit: { message: "test: Tests are good" },
         },
         {
           author,
           html_url,
           sha,
-          commit: { message: 'chore: somebody has to keep things going' },
+          commit: { message: "chore: somebody has to keep things going" },
         },
         {
           html_url,
           sha,
           commit: {
-            message: 'build: like chore but fancier and without author',
+            message: "build: like chore but fancier and without author",
           },
         },
         {
           author,
           html_url,
           sha,
-          commit: { message: 'ci: ok this is a CI change' },
+          commit: { message: "ci: ok this is a CI change" },
         },
         {
           author,
           html_url,
           sha,
-          commit: { message: 'uncategorized commit' },
+          commit: { message: "uncategorized commit" },
         },
       ],
     },
@@ -102,62 +102,62 @@ describe('commit', () => {
 
   beforeEach(() => compareCommits.mockClear());
 
-  test('render commits diff for each category', async () => {
+  test("render commits diff for each category", async () => {
     (getOctokit as jest.Mock).mockReturnValue({
       rest: { repos: { compareCommits } },
     });
     const { changes, nextVersionType, tasks, pullRequests } =
-      await commitParser(token, 'main');
+      await commitParser(token, "main");
     expect(setOutput).toHaveBeenCalledWith(
-      'changes',
+      "changes",
       JSON.stringify(
         compareCommitsResponse.data.commits.map((commit) => commit.sha),
       ), // 8 commits
     );
-    expect(setOutput).toHaveBeenCalledWith('contributors', '["@darioblanco"]');
-    expect(setOutput).toHaveBeenCalledWith('tasks', '[]');
-    expect(setOutput).toHaveBeenCalledWith('pull_requests', '[]');
+    expect(setOutput).toHaveBeenCalledWith("contributors", '["@darioblanco"]');
+    expect(setOutput).toHaveBeenCalledWith("tasks", "[]");
+    expect(setOutput).toHaveBeenCalledWith("pull_requests", "[]");
     expect(changes).toMatchSnapshot();
     expect(nextVersionType).toBe(VersionType.minor);
-    expect(tasks).toBe('');
-    expect(pullRequests).toBe('');
+    expect(tasks).toBe("");
+    expect(pullRequests).toBe("");
   });
 
-  test('render commits diff when scope is required', async () => {
+  test("render commits diff when scope is required", async () => {
     (getOctokit as jest.Mock).mockReturnValue({
       rest: { repos: { compareCommits } },
     });
     const { changes, nextVersionType, tasks, pullRequests } =
-      await commitParser(token, 'v1.0.0', 'JIRA-', undefined, 'my-app');
+      await commitParser(token, "v1.0.0", "JIRA-", undefined, "my-app");
     expect(setOutput).toHaveBeenCalledWith(
-      'changes',
+      "changes",
       '["62ec8ea713fdf14e4abaef3d7d5138194dec49ce","62ec8ea713fdf14e4abaef3d7d5138194dec49ce"]',
     );
-    expect(setOutput).toHaveBeenCalledWith('contributors', '["@darioblanco"]');
-    expect(setOutput).toHaveBeenCalledWith('tasks', '[]');
-    expect(setOutput).toHaveBeenCalledWith('pull_requests', '[]');
+    expect(setOutput).toHaveBeenCalledWith("contributors", '["@darioblanco"]');
+    expect(setOutput).toHaveBeenCalledWith("tasks", "[]");
+    expect(setOutput).toHaveBeenCalledWith("pull_requests", "[]");
     expect(changes).toMatchSnapshot();
     expect(nextVersionType).toBe(VersionType.patch);
-    expect(tasks).toBe('');
-    expect(pullRequests).toBe('');
+    expect(tasks).toBe("");
+    expect(pullRequests).toBe("");
   });
-  [undefined, 'http://my-task-url'].forEach((taskBaseUrl) =>
+  [undefined, "http://my-task-url"].forEach((taskBaseUrl) =>
     test(`render gh squashed commits with scope, PRs and tasks for ${
-      taskBaseUrl || 'undefined'
+      taskBaseUrl || "undefined"
     }`, async () => {
       const commitMessage =
-        'feat(auth): main commit of my PR [JIRA-2772] (#1716)\n\n' +
-        '* feat(auth): set login endpoint controller\n\n' +
-        '* test(auth): add integration test for login endpoint #MAJOR\n\n' +
-        '* fix(auth): set secure and http only options [JIRA-2773]\n\n' +
-        '* perf(auth): add additional fake performance\n\n' +
-        'This is the body of the previous commit\n\n' +
-        'And this is the footer\n\n' +
-        '* (auth): Set values for staging and production\n\n' +
-        '* Address comment from PR\n\n' +
-        'This is the body of the previous commit\n\n' +
-        '* feat(auth): set expiration of the cookie to the amount of time of the token\n\n' +
-        '* fix(auth): remove joi validation since it does not accept localhost\n\n';
+        "feat(auth): main commit of my PR [JIRA-2772] (#1716)\n\n" +
+        "* feat(auth): set login endpoint controller\n\n" +
+        "* test(auth): add integration test for login endpoint #MAJOR\n\n" +
+        "* fix(auth): set secure and http only options [JIRA-2773]\n\n" +
+        "* perf(auth): add additional fake performance\n\n" +
+        "This is the body of the previous commit\n\n" +
+        "And this is the footer\n\n" +
+        "* (auth): Set values for staging and production\n\n" +
+        "* Address comment from PR\n\n" +
+        "This is the body of the previous commit\n\n" +
+        "* feat(auth): set expiration of the cookie to the amount of time of the token\n\n" +
+        "* fix(auth): remove joi validation since it does not accept localhost\n\n";
       const compareSquashedCommitsResponse = {
         data: {
           commits: [
@@ -180,43 +180,43 @@ describe('commit', () => {
         },
       });
       const { changes, nextVersionType, tasks, pullRequests } =
-        await commitParser(token, 'v1.0.0', 'JIRA-', taskBaseUrl, 'auth');
+        await commitParser(token, "v1.0.0", "JIRA-", taskBaseUrl, "auth");
       expect(setOutput).toHaveBeenCalledWith(
-        'changes',
+        "changes",
         JSON.stringify(
           commitMessage
-            .split('* ')
+            .split("* ")
             .slice(1)
             .map(() => sha),
         ), // 6 commits
       );
       expect(setOutput).toHaveBeenCalledWith(
-        'contributors',
+        "contributors",
         '["@darioblanco"]',
       );
       expect(setOutput).toHaveBeenCalledWith(
-        'tasks',
+        "tasks",
         '["JIRA-2772","JIRA-2773"]',
       );
-      expect(setOutput).toHaveBeenCalledWith('pull_requests', '["1716"]');
+      expect(setOutput).toHaveBeenCalledWith("pull_requests", '["1716"]');
       expect(changes).toMatchSnapshot();
       expect(nextVersionType).toBe(VersionType.major);
       const jiraBaseUrl =
-        taskBaseUrl || 'https://theowner.atlassian.net/browse';
+        taskBaseUrl || "https://theowner.atlassian.net/browse";
       expect(tasks).toBe(
         `[JIRA-2772](${jiraBaseUrl}/JIRA-2772), [JIRA-2773](${jiraBaseUrl}/JIRA-2773)`,
       );
       expect(pullRequests).toBe(
-        '[#1716](https://github.com/theowner/therepo/pull/1716)',
+        "[#1716](https://github.com/theowner/therepo/pull/1716)",
       );
     }),
   );
 
-  test('render github squashed commits without scope, PRs and tasks', async () => {
+  test("render github squashed commits without scope, PRs and tasks", async () => {
     const commitMessage =
-      'Title of my PR\n\n' +
-      '* set login endpoint controller\n\n' +
-      '* add integration test for login endpoint\n\n';
+      "Title of my PR\n\n" +
+      "* set login endpoint controller\n\n" +
+      "* add integration test for login endpoint\n\n";
     const compareSquashedCommitsResponse = {
       data: {
         commits: [
@@ -239,23 +239,23 @@ describe('commit', () => {
       },
     });
     const { changes, nextVersionType, tasks, pullRequests } =
-      await commitParser(token, 'v1.0.0', 'JIRA-');
+      await commitParser(token, "v1.0.0", "JIRA-");
     expect(setOutput).toHaveBeenCalledWith(
-      'changes',
+      "changes",
       '["62ec8ea713fdf14e4abaef3d7d5138194dec49ce",' +
         '"62ec8ea713fdf14e4abaef3d7d5138194dec49ce",' +
         '"62ec8ea713fdf14e4abaef3d7d5138194dec49ce"]',
     );
-    expect(setOutput).toHaveBeenCalledWith('contributors', '["@darioblanco"]');
-    expect(setOutput).toHaveBeenCalledWith('tasks', '[]');
-    expect(setOutput).toHaveBeenCalledWith('pull_requests', '[]');
+    expect(setOutput).toHaveBeenCalledWith("contributors", '["@darioblanco"]');
+    expect(setOutput).toHaveBeenCalledWith("tasks", "[]");
+    expect(setOutput).toHaveBeenCalledWith("pull_requests", "[]");
     expect(changes).toMatchSnapshot();
     expect(nextVersionType).toBe(VersionType.patch);
-    expect(tasks).toBe('');
-    expect(pullRequests).toBe('');
+    expect(tasks).toBe("");
+    expect(pullRequests).toBe("");
   });
 
-  test('skip empty commit message', async () => {
+  test("skip empty commit message", async () => {
     const compareEmptyCommitMessageResponse = {
       data: {
         commits: [
@@ -278,14 +278,14 @@ describe('commit', () => {
       },
     });
     const { changes, nextVersionType, tasks, pullRequests } =
-      await commitParser(token, 'v1.0.0', 'JIRA-');
-    expect(setOutput).toHaveBeenCalledWith('changes', '[]');
-    expect(setOutput).toHaveBeenCalledWith('contributors', '["@darioblanco"]');
-    expect(setOutput).toHaveBeenCalledWith('tasks', '[]');
-    expect(setOutput).toHaveBeenCalledWith('pull_requests', '[]');
+      await commitParser(token, "v1.0.0", "JIRA-");
+    expect(setOutput).toHaveBeenCalledWith("changes", "[]");
+    expect(setOutput).toHaveBeenCalledWith("contributors", '["@darioblanco"]');
+    expect(setOutput).toHaveBeenCalledWith("tasks", "[]");
+    expect(setOutput).toHaveBeenCalledWith("pull_requests", "[]");
     expect(changes).toMatchSnapshot();
     expect(nextVersionType).toBe(VersionType.patch);
-    expect(tasks).toBe('');
-    expect(pullRequests).toBe('');
+    expect(tasks).toBe("");
+    expect(pullRequests).toBe("");
   });
 });

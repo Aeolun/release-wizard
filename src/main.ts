@@ -1,33 +1,33 @@
-import * as core from '@actions/core';
-import * as github from '@actions/github';
+import * as core from "@actions/core";
+import * as github from "@actions/github";
 
-import { commitParser } from './lib/commits';
+import { commitParser } from "./lib/commits";
 import {
   createGitTag,
   createGithubRelease,
   renderReleaseBody,
-} from './lib/release';
-import { bumpVersion, retrieveLastReleasedVersion } from './lib/version';
-import { VersionType } from './types';
+} from "./lib/release";
+import { bumpVersion, retrieveLastReleasedVersion } from "./lib/version";
+import { VersionType } from "./types";
 
 export async function run(): Promise<void> {
   try {
     // Global config
-    const app = core.getInput('app', { required: false });
-    const appTagSeparator = core.getInput('appTagSeparator', {
+    const app = core.getInput("app", { required: false });
+    const appTagSeparator = core.getInput("appTagSeparator", {
       required: false,
     });
-    const token = core.getInput('token', { required: true });
-    const withV = core.getBooleanInput('withV', { required: false });
-    const versionPrefix = withV ? 'v' : '';
-    const tagPrefix = app
-      ? `${app}${appTagSeparator}${versionPrefix}`
-      : versionPrefix;
+    const token = core.getInput("token", { required: true });
+    const versionPrefix = core.getInput("versionPrefix", { required: false });
+    let tagPrefix = core.getInput("tagPrefix", { required: false });
+    if (app) {
+      core.debug(`App detected: ${app}`);
+      tagPrefix = `${app}${appTagSeparator}${tagPrefix}`;
+    }
     core.debug(
       `Global configuration: ${JSON.stringify({
         app,
         appTagSeparator,
-        withV,
         versionPrefix,
         tagPrefix,
       })}`,
@@ -35,12 +35,13 @@ export async function run(): Promise<void> {
 
     // Commit loading config
     const baseTag =
-      core.getInput('baseTag', { required: false }) ||
+      core.getInput("baseTag", { required: false }) ||
       (await retrieveLastReleasedVersion(token, tagPrefix)) ||
-      (github.context.ref.split('/').pop() as string);
-    core.setOutput('base_tag', baseTag);
-    const taskBaseUrl = core.getInput('taskBaseUrl', { required: false });
-    const taskPrefix = core.getInput('taskPrefix', { required: false });
+      (github.context.ref.split("/").pop() as string);
+    core.info(`Using tag ${baseTag} as the base for comparison.`);
+    core.setOutput("base_tag", baseTag);
+    const taskBaseUrl = core.getInput("taskBaseUrl", { required: false });
+    const taskPrefix = core.getInput("taskPrefix", { required: false });
     core.debug(
       `Commit configuration: ${JSON.stringify({
         baseTag,
@@ -50,12 +51,12 @@ export async function run(): Promise<void> {
     );
 
     // Release config
-    const pushTag = core.getInput('pushTag', { required: false }) === 'true';
-    const templatePath = core.getInput('templatePath', { required: false });
+    const pushTag = core.getInput("pushTag", { required: false }) === "true";
+    const templatePath = core.getInput("templatePath", { required: false });
     const draft =
-      core.getInput('draft', { required: false }) === 'true' || false;
+      core.getInput("draft", { required: false }) === "true" || false;
     const prerelease =
-      core.getInput('prerelease', { required: false }) === 'true' || false;
+      core.getInput("prerelease", { required: false }) === "true" || false;
     core.debug(
       `Release configuration: ${JSON.stringify({
         pushTag,
@@ -78,25 +79,25 @@ export async function run(): Promise<void> {
     let { nextVersionType } = diffInfo;
     // Force next version as release candidate if prerelease draft is created
     if (prerelease) {
-      core.debug('Pre release detected');
+      core.debug("Pre release detected");
       nextVersionType = VersionType.prerelease;
     }
 
     const releaseTag =
-      core.getInput('releaseTag', { required: false }) ||
+      core.getInput("releaseTag", { required: false }) ||
       (await bumpVersion(token, tagPrefix, nextVersionType));
     if (pushTag) {
-      core.debug('Automatic push of git tag triggered');
+      core.debug("Automatic push of git tag triggered");
       await createGitTag(token, releaseTag);
     }
 
     // Won't replace it if release tag is given manually
-    const releaseVersion = releaseTag.replace(tagPrefix, '');
-    const releaseTitleTemplate = core.getInput('releaseTitleTemplate', {
+    const releaseVersion = releaseTag.replace(tagPrefix, "");
+    const releaseTitleTemplate = core.getInput("releaseTitleTemplate", {
       required: false,
     });
     const releaseName =
-      core.getInput('releaseName', { required: false }) ||
+      core.getInput("releaseName", { required: false }) ||
       releaseTitleTemplate
         .replace(/\$TAG/g, releaseTag)
         .replace(/\$APP/g, app)

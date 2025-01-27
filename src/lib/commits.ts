@@ -1,7 +1,7 @@
-import * as core from '@actions/core';
-import * as github from '@actions/github';
+import * as core from "@actions/core";
+import * as github from "@actions/github";
 
-import { VersionType } from '../types';
+import { VersionType } from "../types";
 
 // Octokit's commit type subset
 interface Commit {
@@ -19,7 +19,7 @@ interface Commit {
 export async function commitParser(
   token: string,
   baseRef: string,
-  taskPrefix = 'JIR-',
+  taskPrefix = "JIR-",
   taskBaseUrl?: string,
   commitScope?: string,
 ): Promise<{
@@ -34,52 +34,52 @@ export async function commitParser(
   } = {
     // A new feature
     feat: {
-      title: '### **:zap: Features**',
+      title: "### **:zap: Features**",
       commits: [],
     },
     // A bug fix
     fix: {
-      title: '### **:wrench: Fixes**',
+      title: "### **:wrench: Fixes**",
       commits: [],
     },
     // A code change that improves performance
     perf: {
-      title: '### **:runner: Performance**',
+      title: "### **:runner: Performance**",
       commits: [],
     },
     // Documentation only changes
     docs: {
-      title: '### **:books: Documentation**',
+      title: "### **:books: Documentation**",
       commits: [],
     },
     // Changes that do not affect the meaning of the code (lint changes)
     style: {
-      title: '### **:nail_care: Style**',
+      title: "### **:nail_care: Style**",
       commits: [],
     },
     // A code change that neither fixes a bug nor adds a feature
     refactor: {
-      title: '### **:mountain: Refactors**',
+      title: "### **:mountain: Refactors**",
       commits: [],
     },
     // Adding missing tests or correcting existing tests
     test: {
-      title: '### **:traffic_light: Tests**',
+      title: "### **:traffic_light: Tests**",
       commits: [],
     },
     // Changes that affect the build system or external development dependencies
     chore: {
-      title: '### **:construction: Maintenance**',
+      title: "### **:construction: Maintenance**",
       commits: [],
     },
     // As an alternative to 'chore', but with very similar meaning
     build: {
-      title: '### **:construction_worker: Build**',
+      title: "### **:construction_worker: Build**",
       commits: [],
     },
     // Changes for CI configuration files and scripts (e.g. Github CI, helm values...)
     ci: {
-      title: '### **:traffic_light: CI**',
+      title: "### **:traffic_light: CI**",
       commits: [],
     },
   };
@@ -140,17 +140,17 @@ export async function commitParser(
     }
   };
 
-  const prRegExp = new RegExp('(\\(#\\d+\\))', 'gmi');
-  const taskRegExp = new RegExp(`\\[${taskPrefix}\\d+\\]`, 'gmi');
-  const majorRegExp = new RegExp(`(#MAJOR$)`, 'gmi');
+  const prRegExp = /(\(#\d+\))/gim;
+  const taskRegExp = new RegExp(`\\[${taskPrefix}\\d+\\]`, "gmi");
+  const majorRegExp = /(#MAJOR$)/gim;
   commits.forEach((githubCommit) => {
     const {
       html_url: commitUrl,
       commit: { message },
       sha,
     } = githubCommit;
-    let username = '';
-    let userUrl = '';
+    let username = "";
+    let userUrl = "";
     if (githubCommit.author) {
       ({ login: username, html_url: userUrl } = githubCommit.author);
       contributors.add(`@${username}`);
@@ -160,8 +160,8 @@ export async function commitParser(
     // Detect if commit is a Github squash. In that case, convert body
     // in multiple single line commits and parse
     if (/\* .*\n/.test(message)) {
-      core.debug('Commit is a Github squash, analyzing content...');
-      const messageLines = message.split('* ');
+      core.debug("Commit is a Github squash, analyzing content...");
+      const messageLines = message.split("* ");
       // Categorize all commits except first one
       messageLines.forEach((messageLine) =>
         categorizeCommit({
@@ -177,7 +177,7 @@ export async function commitParser(
     }
   });
 
-  let changesMd = '';
+  let changesMd = "";
 
   const formatCommit = (commit: Commit) => {
     const { username, userUrl, sha, commitUrl } = commit;
@@ -189,23 +189,23 @@ export async function commitParser(
       core.debug(`Found PRs: ${prMatch.toString()}`);
       prMatch
         .slice(1)
-        .forEach((pr) => pullRequests.push(pr.replace(/(\(|\)|#)/g, '')));
+        .forEach((pr) => pullRequests.push(pr.replace(/(\(|\)|#)/g, "")));
     }
 
     // Retrieve specific bump key words
     const majorMatch = majorRegExp.exec(message);
     if (majorMatch) {
-      core.debug('MAJOR bump detected');
+      core.debug("MAJOR bump detected");
       nextVersionType = VersionType.major;
     }
 
     // Only take into account the commit title
-    [message] = message.split('\n');
+    [message] = message.split("\n");
 
     // Detect if commit message has Angular format
     if (/(\w+\([a-zA-Z_-]+\)|\w+|\([a-zA-Z_-]+\)):/.test(message)) {
       // Remove group information for changelog (e.g. messages with categories)
-      message = message.split(':')[1].trim();
+      message = message.split(":")[1].trim();
     }
 
     // Always capitalize commit messages
@@ -216,7 +216,7 @@ export async function commitParser(
     const taskMatch = message.match(taskRegExp);
     if (taskMatch) {
       const rawTask = taskMatch[0];
-      const task = rawTask.replace('[', '').replace(']', '');
+      const task = rawTask.replace("[", "").replace("]", "");
       core.debug(`Found task: ${rawTask}`);
       tasks.add(task);
       message = message.replace(
@@ -248,10 +248,10 @@ export async function commitParser(
 
   const contributorList = [...contributors];
   const taskList = [...tasks];
-  core.setOutput('changes', JSON.stringify(changes));
-  core.setOutput('contributors', JSON.stringify(contributorList));
-  core.setOutput('tasks', JSON.stringify(taskList));
-  core.setOutput('pull_requests', JSON.stringify(pullRequests));
+  core.setOutput("changes", JSON.stringify(changes));
+  core.setOutput("contributors", JSON.stringify(contributorList));
+  core.setOutput("tasks", JSON.stringify(taskList));
+  core.setOutput("pull_requests", JSON.stringify(pullRequests));
 
   // Set bump type to minor if there is at least one 'feat' commit
   if (
@@ -260,12 +260,12 @@ export async function commitParser(
   ) {
     nextVersionType = VersionType.minor;
   }
-  core.setOutput('change_type', nextVersionType);
+  core.setOutput("change_type", nextVersionType);
 
   return {
     nextVersionType,
     changes: changesMd.trim(),
-    contributors: contributorList.join(', '),
+    contributors: contributorList.join(", "),
     tasks: taskList
       .map(
         (task) =>
@@ -273,9 +273,9 @@ export async function commitParser(
             taskBaseUrl || `https://${owner}.atlassian.net/browse`
           }/${task})`,
       )
-      .join(', '),
+      .join(", "),
     pullRequests: pullRequests
       .map((pr) => `[#${pr}](https://github.com/${owner}/${repo}/pull/${pr})`)
-      .join(', '),
+      .join(", "),
   };
 }

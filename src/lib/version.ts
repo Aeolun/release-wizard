@@ -1,8 +1,8 @@
-import semver from 'semver';
-import * as core from '@actions/core';
-import * as github from '@actions/github';
+import * as core from "@actions/core";
+import * as github from "@actions/github";
+import semver from "semver";
 
-import { Release, VersionType } from '../types';
+import { type Release, VersionType } from "../types";
 
 // See semver.ReleaseType
 
@@ -39,18 +39,18 @@ export async function bumpVersion(
   nextVersionType = VersionType.patch,
 ): Promise<string> {
   // Load latest production tag from published releases
-  const fallbackVersion = '0.0.0';
+  const fallbackVersion = "0.0.0";
   const lastTag =
     (await retrieveLastReleasedVersion(token, tagPrefix)) ||
     `${tagPrefix}${fallbackVersion}`;
   core.debug(`Detected "${lastTag}" as the latest tag`);
-  const lastVersion = lastTag.replace(tagPrefix, '');
+  const lastVersion = lastTag.replace(tagPrefix, "");
   core.debug(`Calculated "${lastVersion}" as the latest version`);
 
   let newVersion: string;
   if (nextVersionType === VersionType.prerelease) {
     // Bump release candidate as 'prerelease' if detected as next release type
-    newVersion = semver.inc(lastVersion, nextVersionType, 'rc') as string;
+    newVersion = semver.inc(lastVersion, nextVersionType, "rc") as string;
     core.debug(`Bump as prerelease, new calculated version: ${newVersion}`);
   } else {
     // 'major', 'minor' or 'patch' needs to be bumped
@@ -63,11 +63,11 @@ export async function bumpVersion(
   const newTag = `${tagPrefix}${newVersion}`;
   core.debug(`New tag: ${newTag}`);
 
-  core.setOutput('previous_tag', lastTag);
-  core.setOutput('previous_version', lastVersion);
-  core.setOutput('new_tag', newTag);
-  core.setOutput('new_version', newVersion);
-  core.setOutput('release_type', nextVersionType);
+  core.setOutput("previous_tag", lastTag);
+  core.setOutput("previous_version", lastVersion);
+  core.setOutput("new_tag", newTag);
+  core.setOutput("new_version", newVersion);
+  core.setOutput("release_type", nextVersionType);
   return newTag;
 }
 
@@ -86,7 +86,7 @@ export async function retrieveLastReleasedVersion(
     return !draft && !prerelease && tagName.startsWith(tagPrefix);
   };
   core.debug(
-    'Discover latest published release, which serves as base tag for commit comparison',
+    "Discover latest published release, which serves as base tag for commit comparison",
   );
   return findReleaseTag(token, isVersionReleased);
 }

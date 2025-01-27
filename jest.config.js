@@ -1,12 +1,12 @@
-const path = require('path');
+const path = require("node:path");
 
 module.exports = {
   clearMocks: true,
-  collectCoverageFrom: ['<rootDir>/src/**/*.ts', '!<rootDir>/src/index.ts'],
-  coverageDirectory: 'coverage',
+  collectCoverageFrom: ["<rootDir>/src/**/*.ts", "!<rootDir>/src/index.ts"],
+  coverageDirectory: "coverage",
   coverageReporters: process.env.GITHUB_ACTIONS
-    ? ['lcovonly', 'text']
-    : ['html', 'lcov', 'text'],
+    ? ["lcovonly", "text"]
+    : ["html", "lcov", "text"],
   coverageThreshold: {
     global: {
       branches: 100,
@@ -14,14 +14,14 @@ module.exports = {
       lines: 100,
     },
   },
-  moduleFileExtensions: ['js', 'ts'],
+  moduleFileExtensions: ["js", "ts"],
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-    '^#/test/(.*)$': '<rootDir>/test/$1',
+    "^@/(.*)$": "<rootDir>/src/$1",
+    "^#/test/(.*)$": "<rootDir>/test/$1",
   },
-  preset: 'ts-jest',
+  preset: "ts-jest",
   rootDir: path.resolve(__dirname),
-  testEnvironment: require.resolve(`jest-environment-node`),
-  testMatch: ['**/*.spec.ts'],
+  testEnvironment: require.resolve("jest-environment-node"),
+  testMatch: ["**/*.spec.ts"],
   verbose: true,
 };
