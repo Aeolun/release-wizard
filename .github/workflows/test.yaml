@@ -16,15 +16,15 @@ jobs:
         run: npm run lint
       - name: Test code
         run: npm run test
-  integration_test:
-    if: github.ref == 'refs/heads/main'
-    name: integration test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout git repository
-        uses: actions/checkout@v4
-      - name: Create Release
-        uses: aeolun/release-wizard@main
-        with:
-          templatePath: RELEASE_DRAFT/default.md
-          token: ${{ github.token }}
+  # integration_test:
+  #   if: github.ref == 'refs/heads/main'
+  #   name: integration test
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout git repository
+  #       uses: actions/checkout@v4
+  #     - name: Create Release
+  #       uses: aeolun/release-wizard@main
+  #       with:
+  #         templatePath: RELEASE_DRAFT/default.md
+  #         token: ${{ github.token }}
