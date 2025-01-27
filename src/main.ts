@@ -95,15 +95,18 @@ export async function run(): Promise<void> {
     const { changes, contributors, tasks, pullRequests } = diffInfo;
 
     let { nextVersionType } = diffInfo;
+
     // Force next version as release candidate if prerelease draft is created
     if (prerelease) {
       core.debug("Pre release detected");
       nextVersionType = VersionType.prerelease;
     }
 
+    core.info(`Next version is ${nextVersionType}.`);
+
     const releaseTag =
       core.getInput("releaseTag", { required: false }) ||
-      (await bumpVersion(token, tagPrefix, nextVersionType));
+      (await bumpVersion(token, tagPrefix, versionPrefix, nextVersionType));
     if (pushTag) {
       core.debug("Automatic push of git tag triggered");
       await createGitTag(token, releaseTag);

@@ -701,8 +701,9 @@ function run() {
                 core.debug("Pre release detected");
                 nextVersionType = types_1.VersionType.prerelease;
             }
+            core.info(`Next version is ${nextVersionType}.`);
             const releaseTag = core.getInput("releaseTag", { required: false }) ||
-                (yield (0, version_1.bumpVersion)(token, tagPrefix, nextVersionType));
+                (yield (0, version_1.bumpVersion)(token, tagPrefix, versionPrefix, nextVersionType));
             if (pushTag) {
                 core.debug("Automatic push of git tag triggered");
                 yield (0, release_1.createGitTag)(token, releaseTag);
