@@ -55,9 +55,5 @@
     "package": "ncc build --source-map --license licenses.txt",
     "prepare": "is-ci || husky install",
     "test": "jest --coverage"
-  },
-  "lint-staged": {
-    "*": "npm run check",
-    "*.{js,jsx,ts,tsx}": "biome check --unsafe --write"
   }
 }

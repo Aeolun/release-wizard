@@ -221,4 +221,59 @@ describe("version", () => {
 
     expect(await retrieveLastReleasedVersion(token, tagPrefix, versionPrefix)).toBe(undefined);
   });
+
+  test('bump patch when last release has a v prefix', async () => {
+    const expectedTag = `${tagPrefix}0.1.5`;
+    const previousVersion = `v0.1.4`;
+    const previousTag = `${tagPrefix}${previousVersion}`;
+    mockGithub([
+      {
+        data: [
+          { prerelease: false, draft: false, tag_name: "fake-prefix@0.0.3" },
+          { prerelease: false, draft: false, tag_name: "other-app@0.0.3" },
+        ],
+      },
+      {
+        data: [
+          { prerelease: false, draft: false, tag_name: previousTag }, // Latest version with v prefix
+          { prerelease: false, draft: false, tag_name: `${tagPrefix}0.1.3` },
+          { prerelease: false, draft: false, tag_name: `${tagPrefix}0.1.2` },
+        ],
+      },
+    ]);
+
+    expect(
+      await bumpVersion(token, tagPrefix, versionPrefix, VersionType.patch)
+    ).toBe(expectedTag);
+
+    expect(setOutput).toHaveBeenCalledWith("previous_tag", previousTag);
+    expect(setOutput).toHaveBeenCalledWith("previous_version", previousVersion);
+    expect(setOutput).toHaveBeenCalledWith("new_tag", expectedTag);
+    expect(setOutput).toHaveBeenCalledWith("new_version", "0.1.5");
+    expect(setOutput).toHaveBeenCalledWith("release_type", VersionType.patch);
+  });
+
+
+  test('bump patch when last release has a v prefix but new version should not', async () => {
+    const expectedTag = `${tagPrefix}0.1.5`;
+    const previousVersion = `v0.1.4`;
+    const previousTag = `${tagPrefix}${previousVersion}`;
+    mockGithub([
+      {
+        data: [
+          { prerelease: false, draft: false, tag_name: previousTag }, // Latest version with v prefix
+        ],
+      },
+    ]);
+
+    expect(
+      await bumpVersion(token, tagPrefix, versionPrefix, VersionType.patch)
+    ).toBe(expectedTag);
+
+    expect(setOutput).toHaveBeenCalledWith("previous_tag", previousTag);
+    expect(setOutput).toHaveBeenCalledWith("previous_version", previousVersion);
+    expect(setOutput).toHaveBeenCalledWith("new_tag", expectedTag);
+    expect(setOutput).toHaveBeenCalledWith("new_version", "0.1.5");
+    expect(setOutput).toHaveBeenCalledWith("release_type", VersionType.patch);
+  });
 });

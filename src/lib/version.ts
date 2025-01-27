@@ -80,7 +80,7 @@ export async function retrieveLastReleasedVersion(
   const isVersionReleased = (release: Release): boolean => {
     const { prerelease, draft, tag_name: tagName, name } = release;
     core.debug(
-      `Evaluating if "${release.tag_name}" has been released: ${JSON.stringify({
+      `Evaluating if release "${release.name}" with tag "${release.tag_name}" has been released: ${JSON.stringify({
         prerelease,
         draft,
       })}`,

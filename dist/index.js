@@ -565,7 +565,7 @@ function retrieveLastReleasedVersion(token, tagPrefix, versionPrefix) {
     return __awaiter(this, void 0, void 0, function* () {
         const isVersionReleased = (release) => {
             const { prerelease, draft, tag_name: tagName, name } = release;
-            core.debug(`Evaluating if "${release.tag_name}" has been released: ${JSON.stringify({
+            core.debug(`Evaluating if release "${release.name}" with tag "${release.tag_name}" has been released: ${JSON.stringify({
                 prerelease,
                 draft,
             })}`);
