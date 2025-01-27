@@ -8,7 +8,9 @@ import { type Release, VersionType } from "../types";
 
 const findReleaseTag = async (
   token: string,
-  matchFunction: (release: Release) => boolean,
+  matchFunction: (release: Release, tagPrefix: string, versionPrefix: string | undefined) => boolean,
+  tagPrefix: string,
+  versionPrefix: string | undefined,
 ) => {
   const { owner, repo } = github.context.repo;
 
@@ -26,7 +28,7 @@ const findReleaseTag = async (
     listReleasesOptions,
   )) {
     for (const release of response.data) {
-      if (matchFunction(release)) return release.tag_name;
+      if (matchFunction(release, tagPrefix, versionPrefix)) return release.tag_name;
     }
   }
   /* eslint-enable no-restricted-syntax */
@@ -72,26 +74,34 @@ export async function bumpVersion(
   return newTag;
 }
 
+export type MatchRelease = {
+  name?: string | null
+  tag_name: string
+  prerelease: boolean
+  draft: boolean
+}
+
+export const isVersionReleased = (release: MatchRelease, tagPrefix: string, versionPrefix: string | undefined): boolean => {
+  const { prerelease, draft, tag_name: tagName, name } = release;
+  core.debug(
+    `Evaluating if release "${release.name}" with tag "${release.tag_name}" has been released: ${JSON.stringify({
+      prerelease,
+      draft,
+    })}`,
+  );
+  if (versionPrefix && (!name || !name.startsWith(versionPrefix))) {
+    return false;
+  }
+  return !draft && !prerelease && tagName.startsWith(tagPrefix);
+};
+
 export async function retrieveLastReleasedVersion(
   token: string,
   tagPrefix: string,
   versionPrefix: string | undefined,
 ): Promise<string | undefined> {
-  const isVersionReleased = (release: Release): boolean => {
-    const { prerelease, draft, tag_name: tagName, name } = release;
-    core.debug(
-      `Evaluating if release "${release.name}" with tag "${release.tag_name}" has been released: ${JSON.stringify({
-        prerelease,
-        draft,
-      })}`,
-    );
-    if (versionPrefix && (!name || name.startsWith(versionPrefix))) {
-      return false;
-    }
-    return !draft && !prerelease && tagName.startsWith(tagPrefix);
-  };
   core.debug(
     "Discover latest published release, which serves as base tag for commit comparison",
   );
-  return findReleaseTag(token, isVersionReleased);
+  return findReleaseTag(token, isVersionReleased, tagPrefix, versionPrefix);
 }

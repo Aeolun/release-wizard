@@ -492,6 +492,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.isVersionReleased = void 0;
 exports.bumpVersion = bumpVersion;
 exports.retrieveLastReleasedVersion = retrieveLastReleasedVersion;
 const core = __importStar(__nccwpck_require__(2186));
@@ -499,7 +500,7 @@ const github = __importStar(__nccwpck_require__(5438));
 const semver_1 = __importDefault(__nccwpck_require__(1383));
 const types_1 = __nccwpck_require__(8164);
 // See semver.ReleaseType
-const findReleaseTag = (token, matchFunction) => __awaiter(void 0, void 0, void 0, function* () {
+const findReleaseTag = (token, matchFunction, tagPrefix, versionPrefix) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, e_1, _b, _c;
     const { owner, repo } = github.context.repo;
     const octokit = github.getOctokit(token);
@@ -516,7 +517,7 @@ const findReleaseTag = (token, matchFunction) => __awaiter(void 0, void 0, void 
             _d = false;
             const response = _c;
             for (const release of response.data) {
-                if (matchFunction(release))
+                if (matchFunction(release, tagPrefix, versionPrefix))
                     return release.tag_name;
             }
         }
@@ -561,21 +562,22 @@ function bumpVersion(token_1, tagPrefix_1, versionPrefix_1) {
         return newTag;
     });
 }
+const isVersionReleased = (release, tagPrefix, versionPrefix) => {
+    const { prerelease, draft, tag_name: tagName, name } = release;
+    core.debug(`Evaluating if release "${release.name}" with tag "${release.tag_name}" has been released: ${JSON.stringify({
+        prerelease,
+        draft,
+    })}`);
+    if (versionPrefix && (!name || !name.startsWith(versionPrefix))) {
+        return false;
+    }
+    return !draft && !prerelease && tagName.startsWith(tagPrefix);
+};
+exports.isVersionReleased = isVersionReleased;
 function retrieveLastReleasedVersion(token, tagPrefix, versionPrefix) {
     return __awaiter(this, void 0, void 0, function* () {
-        const isVersionReleased = (release) => {
-            const { prerelease, draft, tag_name: tagName, name } = release;
-            core.debug(`Evaluating if release "${release.name}" with tag "${release.tag_name}" has been released: ${JSON.stringify({
-                prerelease,
-                draft,
-            })}`);
-            if (versionPrefix && (!name || name.startsWith(versionPrefix))) {
-                return false;
-            }
-            return !draft && !prerelease && tagName.startsWith(tagPrefix);
-        };
         core.debug("Discover latest published release, which serves as base tag for commit comparison");
-        return findReleaseTag(token, isVersionReleased);
+        return findReleaseTag(token, exports.isVersionReleased, tagPrefix, versionPrefix);
     });
 }
 
