@@ -34,7 +34,8 @@ describe("run", () => {
   const draft = true;
   const prerelease = false;
   const releaseTitleTemplate = "$TAG 🚀";
-  const withV = "true";
+  const versionPrefix = "";
+  const tagPrefix = "";
   // Template stubs
   const changes = "";
   const nextVersionType = VersionType.patch;
@@ -73,8 +74,10 @@ describe("run", () => {
           return templatePath;
         case "token":
           return token;
-        case "withV":
-          return withV;
+        case "versionPrefix":
+          return versionPrefix;
+        case "tagPrefix":
+          return tagPrefix;
         default:
           return undefined;
       }
@@ -92,7 +95,11 @@ describe("run", () => {
 
     await run();
 
-    expect(retrieveLastReleasedVersion).toHaveBeenCalledWith(token, tagPrefix);
+    expect(retrieveLastReleasedVersion).toHaveBeenCalledWith(
+      token,
+      tagPrefix,
+      versionPrefix,
+    );
     expect(commitParser).toHaveBeenCalledWith(
       token,
       baseTag,
@@ -113,6 +120,7 @@ describe("run", () => {
     expect(bumpVersion).toHaveBeenCalledWith(
       token,
       tagPrefix,
+      versionPrefix,
       VersionType.patch,
     );
     expect(createGitTag).not.toHaveBeenCalled();
@@ -137,7 +145,8 @@ describe("run", () => {
     const releaseName = "fake-app";
     const releaseTag = "mycustomprefix-1.0.6";
     const taskBaseUrl = "https://myfaketask.url";
-    const withV = true;
+    const versionPrefix = "";
+    const tagPrefix = "v";
     (getInput as jest.Mock).mockImplementation((name: string) => {
       switch (name) {
         case "app":
@@ -166,14 +175,16 @@ describe("run", () => {
           return templatePath;
         case "token":
           return token;
+        case "versionPrefix":
+          return versionPrefix;
+        case "tagPrefix":
+          return tagPrefix;
         default:
           return undefined;
       }
     });
     (getBooleanInput as jest.Mock).mockImplementation((name: string) => {
       switch (name) {
-        case "withV":
-          return withV;
         default:
           return undefined;
       }

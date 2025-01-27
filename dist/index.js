@@ -569,9 +569,10 @@ function retrieveLastReleasedVersion(token, tagPrefix, versionPrefix) {
                 prerelease,
                 draft,
             })}`);
-            if (!name)
+            if (versionPrefix && (!name || name.startsWith(versionPrefix))) {
                 return false;
-            return !draft && !prerelease && name.startsWith(versionPrefix) && tagName.startsWith(tagPrefix);
+            }
+            return !draft && !prerelease && tagName.startsWith(tagPrefix);
         };
         core.debug("Discover latest published release, which serves as base tag for commit comparison");
         return findReleaseTag(token, isVersionReleased);

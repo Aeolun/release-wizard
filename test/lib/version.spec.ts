@@ -23,6 +23,7 @@ interface ReleaseFixture {
 describe("version", () => {
   const token = "fake";
   const tagPrefix = "myprefix@";
+  const versionPrefix = ''
   const releaseResponseFixture = [
     {
       data: [
@@ -66,7 +67,7 @@ describe("version", () => {
         const expectedTag = `${tagPrefix}${expectedVersion as string}`;
         mockGithub([{ data: [] }]);
         expect(
-          await bumpVersion(token, tagPrefix, versionType as VersionType),
+          await bumpVersion(token, tagPrefix, versionPrefix, versionType as VersionType),
         ).toBe(expectedTag);
         expect(setOutput).toHaveBeenCalledWith(
           "previous_tag",
@@ -126,7 +127,7 @@ describe("version", () => {
           },
         ]);
         expect(
-          await bumpVersion(token, tagPrefix, versionType as VersionType),
+          await bumpVersion(token, tagPrefix, versionPrefix, versionType as VersionType),
         ).toBe(expectedTag);
         expect(setOutput).toHaveBeenCalledWith("previous_tag", previousTag);
         expect(setOutput).toHaveBeenCalledWith(
@@ -178,7 +179,7 @@ describe("version", () => {
           },
         ]);
         expect(
-          await bumpVersion(token, tagPrefix, versionType as VersionType),
+          await bumpVersion(token, tagPrefix, versionPrefix, versionType as VersionType),
         ).toBe(expectedTag);
         expect(setOutput).toHaveBeenCalledWith("previous_tag", previousTag);
         expect(setOutput).toHaveBeenCalledWith(
@@ -196,7 +197,7 @@ describe("version", () => {
     const expectedTag = `${tagPrefix}0.0.1`;
     mockGithub(releaseResponseFixture);
 
-    expect(await retrieveLastReleasedVersion(token, tagPrefix)).toBe(
+    expect(await retrieveLastReleasedVersion(token, tagPrefix, versionPrefix)).toBe(
       expectedTag,
     );
   });
@@ -218,6 +219,6 @@ describe("version", () => {
 
     mockGithub(releaseFixtureOverride);
 
-    expect(await retrieveLastReleasedVersion(token, tagPrefix)).toBe(undefined);
+    expect(await retrieveLastReleasedVersion(token, tagPrefix, versionPrefix)).toBe(undefined);
   });
 });
