@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write # Needed for creating releases and pushing tags
+      actions: write # Needed for allow changing the major and minor tags
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -41,8 +42,8 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git tag -fa v${{ steps.get_version.outputs.MAJOR }} -m "Update v${{ steps.get_version.outputs.MAJOR }} tag"
           git tag -fa v${{ steps.get_version.outputs.MINOR }} -m "Update v${{ steps.get_version.outputs.MINOR }} tag"
-          git push origin v${{ steps.get_version.outputs.MAJOR }} --force
-          git push origin v${{ steps.get_version.outputs.MINOR }} --force
+          git status
+          git push origin --tags --force
 
       - name: Create Release
         uses: softprops/action-gh-release@v1

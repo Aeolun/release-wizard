@@ -1,26 +1,6 @@
 name: test
 on:
   push:
-    branches:
-      - '*'
-    paths:
-      - '.github/workflows/main.yaml'
-      - '.github/RELEASE_DRAFT*'
-      - 'package.json'
-      - 'src/**'
-      - 'tests/*'
-      - 'tsconfig.build.json'
-      - 'tsconfig.json'
-  pull_request:
-    paths:
-      - '.github/workflows/main.yaml'
-      - '.github/RELEASE_DRAFT*'
-      - 'package.json'
-      - 'src/**'
-      - 'tests/*'
-      - 'tsconfig.build.json'
-      - 'tsconfig.json'
-  workflow_dispatch:
 jobs:
   unit_test:
     name: unit test
@@ -44,7 +24,7 @@ jobs:
       - name: Checkout git repository
         uses: actions/checkout@v4
       - name: Create Release
-        uses: darioblanco/release-wizard@main
+        uses: aeolun/release-wizard@main
         with:
           templatePath: RELEASE_DRAFT/default.md
           token: ${{ github.token }}

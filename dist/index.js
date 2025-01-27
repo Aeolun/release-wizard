@@ -509,7 +509,7 @@ const findReleaseTag = (token, matchFunction) => __awaiter(void 0, void 0, void 
         repo,
     });
     try {
-        // Look for the earliest release that matches the given condition
+        // Look for the latest release that matches the given condition
         /* eslint-disable no-restricted-syntax */
         for (var _d = true, _e = __asyncValues(octokit.paginate.iterator(listReleasesOptions)), _f; _f = yield _e.next(), _a = _f.done, !_a; _d = true) {
             _c = _f.value;
@@ -531,11 +531,11 @@ const findReleaseTag = (token, matchFunction) => __awaiter(void 0, void 0, void 
     /* eslint-enable no-restricted-syntax */
     return undefined;
 });
-function bumpVersion(token_1, tagPrefix_1) {
-    return __awaiter(this, arguments, void 0, function* (token, tagPrefix, nextVersionType = types_1.VersionType.patch) {
+function bumpVersion(token_1, tagPrefix_1, versionPrefix_1) {
+    return __awaiter(this, arguments, void 0, function* (token, tagPrefix, versionPrefix, nextVersionType = types_1.VersionType.patch) {
         // Load latest production tag from published releases
         const fallbackVersion = "0.0.0";
-        const lastTag = (yield retrieveLastReleasedVersion(token, tagPrefix)) ||
+        const lastTag = (yield retrieveLastReleasedVersion(token, tagPrefix, versionPrefix)) ||
             `${tagPrefix}${fallbackVersion}`;
         core.debug(`Detected "${lastTag}" as the latest tag`);
         const lastVersion = lastTag.replace(tagPrefix, "");
@@ -561,15 +561,17 @@ function bumpVersion(token_1, tagPrefix_1) {
         return newTag;
     });
 }
-function retrieveLastReleasedVersion(token, tagPrefix) {
+function retrieveLastReleasedVersion(token, tagPrefix, versionPrefix) {
     return __awaiter(this, void 0, void 0, function* () {
         const isVersionReleased = (release) => {
-            const { prerelease, draft, tag_name: tagName } = release;
+            const { prerelease, draft, tag_name: tagName, name } = release;
             core.debug(`Evaluating if "${release.tag_name}" has been released: ${JSON.stringify({
                 prerelease,
                 draft,
             })}`);
-            return !draft && !prerelease && tagName.startsWith(tagPrefix);
+            if (!name)
+                return false;
+            return !draft && !prerelease && name.startsWith(versionPrefix) && tagName.startsWith(tagPrefix);
         };
         core.debug("Discover latest published release, which serves as base tag for commit comparison");
         return findReleaseTag(token, isVersionReleased);
@@ -656,15 +658,26 @@ function run() {
                 tagPrefix,
             })}`);
             // Commit loading config
-            const baseTag = core.getInput("baseTag", { required: false }) ||
-                (yield (0, version_1.retrieveLastReleasedVersion)(token, tagPrefix)) ||
-                github.context.ref.split("/").pop();
-            core.info(`Using tag ${baseTag} as the base for comparison.`);
-            core.setOutput("base_tag", baseTag);
+            let baseRefKind = "tag";
+            let baseRef = core.getInput("baseTag", { required: false });
+            if (!baseRef) {
+                core.info(`Looking for released version with tag matching '${tagPrefix}x.x.x' and name matching '${versionPrefix}x.x.x'`);
+                const potentialRef = yield (0, version_1.retrieveLastReleasedVersion)(token, tagPrefix, versionPrefix);
+                if (potentialRef) {
+                    baseRef = potentialRef;
+                }
+            }
+            if (!baseRef) {
+                core.info("No released version found, defaulting to the latest commit in the branch");
+                baseRefKind = "branch";
+                baseRef = github.context.ref.split("/").pop();
+            }
+            core.info(`Using ${baseRefKind} ${baseRef} as the base for comparison.`);
+            core.setOutput("base_tag", baseRef);
             const taskBaseUrl = core.getInput("taskBaseUrl", { required: false });
             const taskPrefix = core.getInput("taskPrefix", { required: false });
             core.debug(`Commit configuration: ${JSON.stringify({
-                baseTag,
+                baseTag: baseRef,
                 taskBaseUrl,
                 taskPrefix,
             })}`);
@@ -679,8 +692,8 @@ function run() {
                 draft,
                 prerelease,
             })}`);
-            core.debug(`Parse commits from ${baseTag} to current sha`);
-            const diffInfo = yield (0, commits_1.commitParser)(token, baseTag, taskPrefix, taskBaseUrl, app);
+            core.debug(`Parse commits from ${baseRef} to current sha`);
+            const diffInfo = yield (0, commits_1.commitParser)(token, baseRef, taskPrefix, taskBaseUrl, app);
             const { changes, contributors, tasks, pullRequests } = diffInfo;
             let { nextVersionType } = diffInfo;
             // Force next version as release candidate if prerelease draft is created

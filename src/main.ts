@@ -34,17 +34,35 @@ export async function run(): Promise<void> {
     );
 
     // Commit loading config
-    const baseTag =
-      core.getInput("baseTag", { required: false }) ||
-      (await retrieveLastReleasedVersion(token, tagPrefix)) ||
-      (github.context.ref.split("/").pop() as string);
-    core.info(`Using tag ${baseTag} as the base for comparison.`);
-    core.setOutput("base_tag", baseTag);
+    let baseRefKind = "tag";
+    let baseRef = core.getInput("baseTag", { required: false });
+    if (!baseRef) {
+      core.info(
+        `Looking for released version with tag matching '${tagPrefix}x.x.x' and name matching '${versionPrefix}x.x.x'`,
+      );
+      const potentialRef = await retrieveLastReleasedVersion(
+        token,
+        tagPrefix,
+        versionPrefix,
+      );
+      if (potentialRef) {
+        baseRef = potentialRef;
+      }
+    }
+    if (!baseRef) {
+      core.info(
+        "No released version found, defaulting to the latest commit in the branch",
+      );
+      baseRefKind = "branch";
+      baseRef = github.context.ref.split("/").pop() as string;
+    }
+    core.info(`Using ${baseRefKind} ${baseRef} as the base for comparison.`);
+    core.setOutput("base_tag", baseRef);
     const taskBaseUrl = core.getInput("taskBaseUrl", { required: false });
     const taskPrefix = core.getInput("taskPrefix", { required: false });
     core.debug(
       `Commit configuration: ${JSON.stringify({
-        baseTag,
+        baseTag: baseRef,
         taskBaseUrl,
         taskPrefix,
       })}`,
@@ -66,10 +84,10 @@ export async function run(): Promise<void> {
       })}`,
     );
 
-    core.debug(`Parse commits from ${baseTag} to current sha`);
+    core.debug(`Parse commits from ${baseRef} to current sha`);
     const diffInfo = await commitParser(
       token,
-      baseTag,
+      baseRef,
       taskPrefix,
       taskBaseUrl,
       app,

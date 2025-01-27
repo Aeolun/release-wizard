@@ -8,7 +8,7 @@ import { type Release, VersionType } from "../types";
 
 const findReleaseTag = async (
   token: string,
-  matchFunction: (release: Release) => unknown,
+  matchFunction: (release: Release) => boolean,
 ) => {
   const { owner, repo } = github.context.repo;
 
@@ -20,7 +20,7 @@ const findReleaseTag = async (
     repo,
   });
 
-  // Look for the earliest release that matches the given condition
+  // Look for the latest release that matches the given condition
   /* eslint-disable no-restricted-syntax */
   for await (const response of octokit.paginate.iterator<Release>(
     listReleasesOptions,
@@ -36,12 +36,13 @@ const findReleaseTag = async (
 export async function bumpVersion(
   token: string,
   tagPrefix: string,
+  versionPrefix: string,
   nextVersionType = VersionType.patch,
 ): Promise<string> {
   // Load latest production tag from published releases
   const fallbackVersion = "0.0.0";
   const lastTag =
-    (await retrieveLastReleasedVersion(token, tagPrefix)) ||
+    (await retrieveLastReleasedVersion(token, tagPrefix, versionPrefix)) ||
     `${tagPrefix}${fallbackVersion}`;
   core.debug(`Detected "${lastTag}" as the latest tag`);
   const lastVersion = lastTag.replace(tagPrefix, "");
@@ -74,16 +75,18 @@ export async function bumpVersion(
 export async function retrieveLastReleasedVersion(
   token: string,
   tagPrefix: string,
+  versionPrefix: string
 ): Promise<string | undefined> {
-  const isVersionReleased = (release: Release) => {
-    const { prerelease, draft, tag_name: tagName } = release;
+  const isVersionReleased = (release: Release): boolean => {
+    const { prerelease, draft, tag_name: tagName, name } = release;
     core.debug(
       `Evaluating if "${release.tag_name}" has been released: ${JSON.stringify({
         prerelease,
         draft,
       })}`,
     );
-    return !draft && !prerelease && tagName.startsWith(tagPrefix);
+    if (!name) return false;
+    return !draft && !prerelease && name.startsWith(versionPrefix) && tagName.startsWith(tagPrefix);
   };
   core.debug(
     "Discover latest published release, which serves as base tag for commit comparison",
