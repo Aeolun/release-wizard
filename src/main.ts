@@ -107,24 +107,8 @@ export async function run(): Promise<void> {
     const releaseTag =
       core.getInput("releaseTag", { required: false }) ||
       (await bumpVersion(token, tagPrefix, versionPrefix, nextVersionType));
-    if (pushTag) {
-      core.debug("Automatic push of git tag triggered");
-      await createGitTag(token, releaseTag);
-    }
 
-    // Won't replace it if release tag is given manually
-    const releaseVersion = releaseTag.replace(tagPrefix, "");
-    const releaseTitleTemplate = core.getInput("releaseTitleTemplate", {
-      required: false,
-    });
-    const releaseName =
-      core.getInput("releaseName", { required: false }) ||
-      releaseTitleTemplate
-        .replace(/\$TAG/g, releaseTag)
-        .replace(/\$APP/g, app)
-        .replace(/\$VERSION/g, releaseVersion);
-
-    // Check for existing release if not a draft
+    // As soon as we know the tag name, check for existing release if not a draft
     if (!draft) {
       try {
         const octokit = github.getOctokit(token);
@@ -147,6 +131,23 @@ export async function run(): Promise<void> {
         core.debug(`No existing release found for tag "${releaseTag}"`);
       }
     }
+
+    if (pushTag) {
+      core.debug("Automatic push of git tag triggered");
+      await createGitTag(token, releaseTag);
+    }
+
+    // Won't replace it if release tag is given manually
+    const releaseVersion = releaseTag.replace(tagPrefix, "");
+    const releaseTitleTemplate = core.getInput("releaseTitleTemplate", {
+      required: false,
+    });
+    const releaseName =
+      core.getInput("releaseName", { required: false }) ||
+      releaseTitleTemplate
+        .replace(/\$TAG/g, releaseTag)
+        .replace(/\$APP/g, app)
+        .replace(/\$VERSION/g, releaseVersion);
 
     core.debug(`Generate release body from template ${templatePath}`);
     const body = await renderReleaseBody(
@@ -172,7 +173,7 @@ export async function run(): Promise<void> {
       tagPrefix,
     );
   } catch (error) {
-    core.debug(JSON.stringify(error));
+    core.debug(error?.toString() ?? "Unknown error");
     core.setFailed((error as Error).message);
   }
 }

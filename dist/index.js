@@ -641,6 +641,7 @@ const version_1 = __nccwpck_require__(7766);
 const types_1 = __nccwpck_require__(8164);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
+        var _a;
         try {
             // Global config
             const app = core.getInput("app", { required: false });
@@ -707,21 +708,7 @@ function run() {
             core.info(`Next version is ${nextVersionType}.`);
             const releaseTag = core.getInput("releaseTag", { required: false }) ||
                 (yield (0, version_1.bumpVersion)(token, tagPrefix, versionPrefix, nextVersionType));
-            if (pushTag) {
-                core.debug("Automatic push of git tag triggered");
-                yield (0, release_1.createGitTag)(token, releaseTag);
-            }
-            // Won't replace it if release tag is given manually
-            const releaseVersion = releaseTag.replace(tagPrefix, "");
-            const releaseTitleTemplate = core.getInput("releaseTitleTemplate", {
-                required: false,
-            });
-            const releaseName = core.getInput("releaseName", { required: false }) ||
-                releaseTitleTemplate
-                    .replace(/\$TAG/g, releaseTag)
-                    .replace(/\$APP/g, app)
-                    .replace(/\$VERSION/g, releaseVersion);
-            // Check for existing release if not a draft
+            // As soon as we know the tag name, check for existing release if not a draft
             if (!draft) {
                 try {
                     const octokit = github.getOctokit(token);
@@ -742,13 +729,27 @@ function run() {
                     core.debug(`No existing release found for tag "${releaseTag}"`);
                 }
             }
+            if (pushTag) {
+                core.debug("Automatic push of git tag triggered");
+                yield (0, release_1.createGitTag)(token, releaseTag);
+            }
+            // Won't replace it if release tag is given manually
+            const releaseVersion = releaseTag.replace(tagPrefix, "");
+            const releaseTitleTemplate = core.getInput("releaseTitleTemplate", {
+                required: false,
+            });
+            const releaseName = core.getInput("releaseName", { required: false }) ||
+                releaseTitleTemplate
+                    .replace(/\$TAG/g, releaseTag)
+                    .replace(/\$APP/g, app)
+                    .replace(/\$VERSION/g, releaseVersion);
             core.debug(`Generate release body from template ${templatePath}`);
             const body = yield (0, release_1.renderReleaseBody)(token, templatePath, app, releaseVersion, changes, tasks, pullRequests, contributors);
             core.debug(`Create Github release for ${releaseTag} tag with ${releaseName} title`);
             yield (0, release_1.createGithubRelease)(token, releaseTag, releaseName, body, draft, prerelease, tagPrefix);
         }
         catch (error) {
-            core.debug(JSON.stringify(error));
+            core.debug((_a = error === null || error === void 0 ? void 0 : error.toString()) !== null && _a !== void 0 ? _a : "Unknown error");
             core.setFailed(error.message);
         }
     });
