@@ -378,27 +378,6 @@ function createGithubRelease(token, tag, name, body, draft, prerelease, tagPrefi
         var _a, e_1, _b, _c;
         const { owner, repo } = github.context.repo;
         const octokit = github.getOctokit(token);
-        // Only check for existing releases if this is not a draft
-        if (!draft) {
-            try {
-                const existingRelease = yield octokit.rest.repos.getReleaseByTag({
-                    owner,
-                    repo,
-                    tag: tag,
-                });
-                if (existingRelease.data) {
-                    core.info(`Release for tag "${tag}" already exists. Skipping creation.`);
-                    core.setOutput("release_id", existingRelease.data.id.toString());
-                    core.setOutput("html_url", existingRelease.data.html_url);
-                    core.setOutput("upload_url", existingRelease.data.upload_url);
-                    return;
-                }
-            }
-            catch (error) {
-                // Release doesn't exist, continue with creation
-                core.debug(`No existing release found for tag "${tag}"`);
-            }
-        }
         if (draft) {
             // Detect if there was a previous release draft that must be removed,
             // looking for all previous release drafts that matches the given tag prefix
@@ -742,6 +721,27 @@ function run() {
                     .replace(/\$TAG/g, releaseTag)
                     .replace(/\$APP/g, app)
                     .replace(/\$VERSION/g, releaseVersion);
+            // Check for existing release if not a draft
+            if (!draft) {
+                try {
+                    const octokit = github.getOctokit(token);
+                    const existingRelease = yield octokit.rest.repos.getReleaseByTag({
+                        owner: github.context.repo.owner,
+                        repo: github.context.repo.repo,
+                        tag: releaseTag,
+                    });
+                    if (existingRelease.data) {
+                        core.info(`Release for tag "${releaseTag}" already exists. Skipping creation.`);
+                        core.setOutput("release_id", existingRelease.data.id.toString());
+                        core.setOutput("html_url", existingRelease.data.html_url);
+                        core.setOutput("upload_url", existingRelease.data.upload_url);
+                        return;
+                    }
+                }
+                catch (error) {
+                    core.debug(`No existing release found for tag "${releaseTag}"`);
+                }
+            }
             core.debug(`Generate release body from template ${templatePath}`);
             const body = yield (0, release_1.renderReleaseBody)(token, templatePath, app, releaseVersion, changes, tasks, pullRequests, contributors);
             core.debug(`Create Github release for ${releaseTag} tag with ${releaseName} title`);

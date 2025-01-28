@@ -123,6 +123,31 @@ export async function run(): Promise<void> {
         .replace(/\$TAG/g, releaseTag)
         .replace(/\$APP/g, app)
         .replace(/\$VERSION/g, releaseVersion);
+
+    // Check for existing release if not a draft
+    if (!draft) {
+      try {
+        const octokit = github.getOctokit(token);
+        const existingRelease = await octokit.rest.repos.getReleaseByTag({
+          owner: github.context.repo.owner,
+          repo: github.context.repo.repo,
+          tag: releaseTag,
+        });
+
+        if (existingRelease.data) {
+          core.info(
+            `Release for tag "${releaseTag}" already exists. Skipping creation.`,
+          );
+          core.setOutput("release_id", existingRelease.data.id.toString());
+          core.setOutput("html_url", existingRelease.data.html_url);
+          core.setOutput("upload_url", existingRelease.data.upload_url);
+          return;
+        }
+      } catch (error) {
+        core.debug(`No existing release found for tag "${releaseTag}"`);
+      }
+    }
+
     core.debug(`Generate release body from template ${templatePath}`);
     const body = await renderReleaseBody(
       token,
