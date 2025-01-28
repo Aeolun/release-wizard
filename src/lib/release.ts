@@ -73,6 +73,30 @@ export async function createGithubRelease(
   const { owner, repo } = github.context.repo;
   const octokit = github.getOctokit(token);
 
+  // Only check for existing releases if this is not a draft
+  if (!draft) {
+    try {
+      const existingRelease = await octokit.rest.repos.getReleaseByTag({
+        owner,
+        repo,
+        tag: tag,
+      });
+
+      if (existingRelease.data) {
+        core.info(
+          `Release for tag "${tag}" already exists. Skipping creation.`,
+        );
+        core.setOutput("release_id", existingRelease.data.id.toString());
+        core.setOutput("html_url", existingRelease.data.html_url);
+        core.setOutput("upload_url", existingRelease.data.upload_url);
+        return;
+      }
+    } catch (error) {
+      // Release doesn't exist, continue with creation
+      core.debug(`No existing release found for tag "${tag}"`);
+    }
+  }
+
   if (draft) {
     // Detect if there was a previous release draft that must be removed,
     // looking for all previous release drafts that matches the given tag prefix
